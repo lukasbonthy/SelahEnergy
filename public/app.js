@@ -2,7 +2,7 @@
 const state = {
   products: [],
   config: {},
-  cart: JSON.parse(localStorage.getItem("boldDropCart") || "[]"),
+  cart: JSON.parse(localStorage.getItem("selahEnergyCart") || "[]"),
   activeProduct: "preachin-peach"
 };
 
@@ -13,7 +13,7 @@ function money(cents) {
 }
 
 function saveCart() {
-  localStorage.setItem("boldDropCart", JSON.stringify(state.cart));
+  localStorage.setItem("selahEnergyCart", JSON.stringify(state.cart));
 }
 
 function toast(message) {
@@ -280,6 +280,51 @@ function startCountdown() {
   setInterval(tick, 1000);
 }
 
+
+function showOrderTicket(data) {
+  const existing = document.querySelector("#orderTicketModal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "orderTicketModal";
+  modal.className = "fixed inset-0 z-[120] grid place-items-center bg-black/80 px-4 backdrop-blur-xl";
+  modal.innerHTML = `
+    <div class="max-h-[92vh] w-full max-w-lg overflow-auto rounded-[2rem] border border-white/10 bg-[#09090d] p-5 shadow-2xl">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-black uppercase tracking-[.2em] text-orange-200/70">Pickup ticket</p>
+          <h2 class="mt-1 text-3xl font-black tracking-[-.04em]">Order saved ✅</h2>
+        </div>
+        <button class="rounded-full border border-white/10 px-3 py-1 text-sm text-white/60" onclick="document.querySelector('#orderTicketModal').remove()">Close</button>
+      </div>
+
+      <div class="mt-5 rounded-3xl bg-white p-4">
+        <img src="${data.qrDataUrl}" alt="Pickup QR code" class="mx-auto w-64 max-w-full" />
+      </div>
+
+      <div class="mt-5 rounded-3xl border border-white/10 bg-white/[.06] p-4">
+        <div class="text-sm text-white/50">Order code</div>
+        <div class="mt-1 select-all text-2xl font-black">${data.orderId}</div>
+      </div>
+
+      <div class="mt-4 rounded-3xl border border-orange-300/20 bg-orange-300/10 p-4 text-sm leading-6 text-white/75">
+        Send <strong>${data.totals.displayTotal}</strong> on Cash App and put this exact order code in the note:
+        <strong class="select-all">${data.cashappNote}</strong>
+      </div>
+
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        ${data.paymentLinks.cashapp ? `<a href="${data.paymentLinks.cashapp}" target="_blank" rel="noopener noreferrer" class="rounded-2xl bg-white px-4 py-3 text-center text-sm font-black uppercase tracking-[.16em] text-black">Open Cash App</a>` : ""}
+        <a href="${data.pickupUrl}" target="_blank" rel="noopener noreferrer" class="rounded-2xl border border-white/10 bg-white/[.08] px-4 py-3 text-center text-sm font-black uppercase tracking-[.16em] text-white">Open ticket</a>
+      </div>
+
+      <p class="mt-4 text-xs leading-5 text-white/40">
+        Bring this QR code to pickup. After it is scanned and marked delivered, it cannot be reused.
+      </p>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
 async function submitOrder(event) {
   event.preventDefault();
 
@@ -324,19 +369,8 @@ async function submitOrder(event) {
     renderCart();
     event.currentTarget.reset();
 
-    const paymentMethod = payload.paymentMethod;
-    const link = paymentMethod === "cashapp"
-      ? data.paymentLinks.cashapp
-      : paymentMethod === "venmo"
-        ? data.paymentLinks.venmo
-        : "";
-
-    if (link) {
-      toast(`Order ${data.orderId} saved. Opening payment...`);
-      window.open(link, "_blank", "noopener,noreferrer");
-    } else {
-      toast(`Order ${data.orderId} saved. Total: ${data.totals.displayTotal}`);
-    }
+    showOrderTicket(data);
+    toast(`Order ${data.orderId} saved.`);
   } catch (err) {
     toast(err.message || "Something went wrong.");
   } finally {
