@@ -9,6 +9,7 @@ const morgan = require("morgan");
 const Database = require("better-sqlite3");
 const { nanoid } = require("nanoid");
 const { z } = require("zod");
+const QRCode = require("qrcode");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,9 +39,24 @@ CREATE TABLE IF NOT EXISTS orders (
   subtotal INTEGER NOT NULL,
   delivery_fee INTEGER NOT NULL,
   total INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'new'
+  status TEXT NOT NULL DEFAULT 'new',
+  pickup_token TEXT,
+  payment_status TEXT NOT NULL DEFAULT 'pending',
+  delivered_at TEXT
 );
 `);
+
+
+const columns = db.prepare("PRAGMA table_info(orders)").all().map((col) => col.name);
+if (!columns.includes("pickup_token")) {
+  db.exec("ALTER TABLE orders ADD COLUMN pickup_token TEXT");
+}
+if (!columns.includes("payment_status")) {
+  db.exec("ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'pending'");
+}
+if (!columns.includes("delivered_at")) {
+  db.exec("ALTER TABLE orders ADD COLUMN delivered_at TEXT");
+}
 
 const products = [
   {
@@ -123,6 +139,41 @@ function money(cents) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+
+function publicBaseUrl(req) {
+  const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
+function safeCustomerName(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "Customer";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+function sanitizePickupOrder(row) {
+  const items = JSON.parse(row.items || "[]");
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    customerName: safeCustomerName(row.customer_name),
+    deliveryMethod: row.delivery_method,
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status || "pending",
+    status: row.status,
+    deliveredAt: row.delivered_at,
+    items,
+    subtotal: row.subtotal,
+    deliveryFee: row.delivery_fee,
+    total: row.total,
+    displaySubtotal: money(row.subtotal),
+    displayDeliveryFee: money(row.delivery_fee),
+    displayTotal: money(row.total)
+  };
+}
+
 function findPack(productId, packId) {
   const product = products.find((p) => p.id === productId);
   if (!product) return null;
@@ -163,7 +214,7 @@ const orderSchema = z.object({
   })).min(1)
 });
 
-app.post("/api/orders", (req, res) => {
+app.post("/api/orders", async (req, res) => {
   const parsed = orderSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Please check the order form.", details: parsed.error.flatten() });
@@ -197,18 +248,19 @@ app.post("/api/orders", (req, res) => {
 
   const deliveryFee = customer.deliveryMethod === "pickup" || subtotal >= config.freeDeliveryAt ? 0 : config.deliveryFee;
   const total = subtotal + deliveryFee;
-  const id = `BD-${nanoid(8).toUpperCase()}`;
+  const id = `SELAH-${nanoid(8).toUpperCase()}`;
+  const pickupToken = nanoid(32);
   const createdAt = new Date().toISOString();
 
   db.prepare(`
     INSERT INTO orders (
       id, created_at, customer_name, email, phone, delivery_method,
       address, city, state, zip, notes, payment_method, items,
-      subtotal, delivery_fee, total, status
+      subtotal, delivery_fee, total, status, pickup_token, payment_status, delivered_at
     ) VALUES (
       @id, @createdAt, @name, @email, @phone, @deliveryMethod,
       @address, @city, @state, @zip, @notes, @paymentMethod, @items,
-      @subtotal, @deliveryFee, @total, 'new'
+      @subtotal, @deliveryFee, @total, 'new', @pickupToken, 'pending', NULL
     )
   `).run({
     id,
@@ -226,7 +278,8 @@ app.post("/api/orders", (req, res) => {
     items: JSON.stringify(normalizedItems),
     subtotal,
     deliveryFee,
-    total
+    total,
+    pickupToken
   });
 
   const paymentLinks = {
@@ -235,9 +288,22 @@ app.post("/api/orders", (req, res) => {
     card: config.stripe
   };
 
+  const pickupUrl = `${publicBaseUrl(req)}/pickup/${id}?token=${pickupToken}`;
+  const qrDataUrl = await QRCode.toDataURL(pickupUrl, {
+    width: 320,
+    margin: 2,
+    color: {
+      dark: "#050507",
+      light: "#ffffff"
+    }
+  });
+
   res.status(201).json({
     ok: true,
     orderId: id,
+    pickupUrl,
+    qrDataUrl,
+    cashappNote: id,
     totals: {
       subtotal,
       deliveryFee,
@@ -248,8 +314,62 @@ app.post("/api/orders", (req, res) => {
       displayTotal: money(total)
     },
     paymentLinks,
-    message: "Order saved. Confirm payment or delivery with the customer."
+    message: "Order saved. Have the customer put the order code in the Cash App note."
   });
+});
+
+
+app.get("/pickup/:id", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pickup.html"));
+});
+
+app.get("/api/pickup/:id", (req, res) => {
+  const row = db.prepare("SELECT * FROM orders WHERE id = ? AND pickup_token = ?").get(req.params.id, req.query.token || "");
+  if (!row) {
+    return res.status(404).json({ error: "Invalid or expired pickup ticket." });
+  }
+
+  res.json({ order: sanitizePickupOrder(row) });
+});
+
+app.post("/api/pickup/:id/mark-delivered", (req, res) => {
+  if ((req.body.pin || "") !== ADMIN_PIN) {
+    return res.status(401).json({ error: "Wrong admin PIN." });
+  }
+
+  const row = db.prepare("SELECT * FROM orders WHERE id = ? AND pickup_token = ?").get(req.params.id, req.query.token || "");
+  if (!row) {
+    return res.status(404).json({ error: "Invalid or expired pickup ticket." });
+  }
+
+  if (row.status === "delivered") {
+    return res.status(409).json({ error: "This order was already delivered.", order: sanitizePickupOrder(row) });
+  }
+
+  if ((row.payment_status || "pending") !== "paid") {
+    return res.status(402).json({ error: "Payment is not marked paid yet. Confirm Cash App first." });
+  }
+
+  db.prepare("UPDATE orders SET status = 'delivered', delivered_at = ? WHERE id = ?").run(new Date().toISOString(), row.id);
+
+  const updated = db.prepare("SELECT * FROM orders WHERE id = ?").get(row.id);
+  res.json({ ok: true, order: sanitizePickupOrder(updated) });
+});
+
+app.post("/api/pickup/:id/mark-paid", (req, res) => {
+  if ((req.body.pin || "") !== ADMIN_PIN) {
+    return res.status(401).json({ error: "Wrong admin PIN." });
+  }
+
+  const row = db.prepare("SELECT * FROM orders WHERE id = ? AND pickup_token = ?").get(req.params.id, req.query.token || "");
+  if (!row) {
+    return res.status(404).json({ error: "Invalid or expired pickup ticket." });
+  }
+
+  db.prepare("UPDATE orders SET payment_status = 'paid', status = CASE WHEN status = 'new' THEN 'confirmed' ELSE status END WHERE id = ?").run(row.id);
+
+  const updated = db.prepare("SELECT * FROM orders WHERE id = ?").get(row.id);
+  res.json({ ok: true, order: sanitizePickupOrder(updated) });
 });
 
 app.get("/api/admin/orders", (req, res) => {
@@ -281,6 +401,22 @@ app.patch("/api/admin/orders/:id", (req, res) => {
   }
 
   const result = db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(status, req.params.id);
+  res.json({ ok: true, changed: result.changes });
+});
+
+
+app.patch("/api/admin/orders/:id/payment", (req, res) => {
+  if (req.query.pin !== ADMIN_PIN) {
+    return res.status(401).json({ error: "Wrong admin PIN." });
+  }
+
+  const paymentStatus = String(req.body.paymentStatus || "");
+  const allowed = ["pending", "paid", "refunded"];
+  if (!allowed.includes(paymentStatus)) {
+    return res.status(400).json({ error: "Invalid payment status." });
+  }
+
+  const result = db.prepare("UPDATE orders SET payment_status = ? WHERE id = ?").run(paymentStatus, req.params.id);
   res.json({ ok: true, changed: result.changes });
 });
 
