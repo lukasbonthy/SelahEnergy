@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selah Energy Pickup Ticket</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#050507] text-white">
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(255,145,77,.25),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(115,90,255,.22),transparent_34%),linear-gradient(180deg,#0a0a10_0%,#050507_55%,#100806_100%)]"></div>
+
+  <main class="mx-auto flex min-h-screen max-w-xl items-center px-4 py-8">
+    <section class="w-full rounded-[2rem] border border-white/10 bg-white/[.07] p-5 shadow-2xl backdrop-blur-xl">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-black uppercase tracking-[.22em] text-orange-200/70">Selah Energy</p>
+          <h1 class="mt-1 text-3xl font-black tracking-[-.05em]">Pickup verification</h1>
+        </div>
+        <div id="statusBadge" class="rounded-full bg-white/10 px-3 py-1 text-xs font-black">Loading</div>
+      </div>
+
+      <div id="ticket" class="mt-6"></div>
+
+      <div class="mt-6 rounded-3xl border border-white/10 bg-black/25 p-4">
+        <label class="block text-xs font-black uppercase tracking-[.18em] text-white/45">Admin PIN</label>
+        <input id="pin" type="password" inputmode="numeric" placeholder="Enter PIN to verify" class="mt-2 w-full rounded-2xl border border-white/10 bg-black/35 px-4 py-3 outline-none focus:border-white/35" />
+        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+          <button id="paidBtn" class="rounded-2xl border border-white/10 bg-white/[.08] px-4 py-3 text-sm font-black uppercase tracking-[.16em] text-white">Mark Paid</button>
+          <button id="deliverBtn" class="rounded-2xl bg-white px-4 py-3 text-sm font-black uppercase tracking-[.16em] text-black">Mark Delivered</button>
+        </div>
+      </div>
+
+      <p id="message" class="mt-4 text-sm text-white/55"></p>
+    </section>
+  </main>
+
+  <script>
+    const pathParts = location.pathname.split("/");
+    const orderId = pathParts[pathParts.length - 1];
+    const token = new URLSearchParams(location.search).get("token");
+
+    function money(cents) {
+      return `$${(cents / 100).toFixed(2)}`;
+    }
+
+    function setMessage(text, good = false) {
+      const el = document.querySelector("#message");
+      el.textContent = text;
+      el.className = `mt-4 text-sm ${good ? "text-emerald-200" : "text-orange-200"}`;
+    }
+
+    function render(order) {
+      const delivered = order.status === "delivered";
+      const paid = order.paymentStatus === "paid";
+
+      document.querySelector("#statusBadge").textContent = delivered ? "Used" : paid ? "Ready" : "Payment pending";
+      document.querySelector("#statusBadge").className = `rounded-full px-3 py-1 text-xs font-black ${
+        delivered ? "bg-red-400/15 text-red-200" : paid ? "bg-emerald-400/15 text-emerald-200" : "bg-orange-300/15 text-orange-200"
+      }`;
+
+      document.querySelector("#ticket").innerHTML = `
+        <div class="rounded-3xl border ${delivered ? "border-red-300/20 bg-red-300/10" : paid ? "border-emerald-300/20 bg-emerald-300/10" : "border-orange-300/20 bg-orange-300/10"} p-5">
+          <div class="text-sm text-white/55">Order</div>
+          <div class="mt-1 select-all text-2xl font-black">${order.id}</div>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div class="text-white/45">Name</div>
+              <div class="font-bold">${order.customerName}</div>
+            </div>
+            <div>
+              <div class="text-white/45">Total</div>
+              <div class="font-bold">${order.displayTotal}</div>
+            </div>
+            <div>
+              <div class="text-white/45">Payment</div>
+              <div class="font-bold">${order.paymentStatus}</div>
+            </div>
+            <div>
+              <div class="text-white/45">Status</div>
+              <div class="font-bold">${order.status}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid gap-2">
+          ${order.items.map(item => `
+            <div class="rounded-2xl border border-white/10 bg-white/[.05] p-3">
+              <div class="font-black">${item.qty}x ${item.packLabel}</div>
+              <div class="mt-1 text-sm text-white/50">${item.productName} • ${item.cans * item.qty} can${item.cans * item.qty === 1 ? "" : "s"}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        ${delivered ? `<div class="mt-4 rounded-2xl border border-red-300/20 bg-red-300/10 p-4 text-red-100">This ticket was already delivered${order.deliveredAt ? " at " + new Date(order.deliveredAt).toLocaleString() : ""}.</div>` : ""}
+      `;
+    }
+
+    async function load() {
+      const res = await fetch(`/api/pickup/${orderId}?token=${encodeURIComponent(token || "")}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        document.querySelector("#ticket").innerHTML = `<div class="rounded-3xl border border-red-300/20 bg-red-300/10 p-5 text-red-100">${data.error || "Invalid ticket."}</div>`;
+        document.querySelector("#statusBadge").textContent = "Invalid";
+        return;
+      }
+
+      render(data.order);
+    }
+
+    async function postAction(action) {
+      const pin = document.querySelector("#pin").value.trim();
+      if (!pin) {
+        setMessage("Enter your admin PIN first.");
+        return;
+      }
+
+      const res = await fetch(`/api/pickup/${orderId}/${action}?token=${encodeURIComponent(token || "")}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(data.error || "Could not update ticket.");
+        if (data.order) render(data.order);
+        return;
+      }
+
+      render(data.order);
+      setMessage(action === "mark-paid" ? "Payment marked paid." : "Order marked delivered. Do not give product again.", true);
+    }
+
+    document.querySelector("#paidBtn").addEventListener("click", () => postAction("mark-paid"));
+    document.querySelector("#deliverBtn").addEventListener("click", () => postAction("mark-delivered"));
+
+    load();
+  </script>
+</body>
+</html>
