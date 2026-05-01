@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bold Drop | Independent Agape Energy Reseller</title>
+  <meta name="description" content="Premium independent reseller storefront for Agape Energy cans, bundles, pickup, and delivery." />
+  <meta property="og:title" content="Bold Drop | Reserve Agape Energy" />
+  <meta property="og:description" content="Pick your flavor, build a bundle, and reserve your drop." />
+  <meta property="og:image" content="/img/preachin-peach-front-back.jpg" />
+  <meta name="theme-color" content="#ff7a55" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Inter", "ui-sans-serif", "system-ui"],
+            body: ["Inter", "ui-sans-serif", "system-ui"]
+          },
+          boxShadow: {
+            glow: "0 0 90px rgba(255, 122, 85, .35)",
+            glass: "0 24px 80px rgba(0,0,0,.38)"
+          },
+          keyframes: {
+            floaty: {
+              "0%,100%": { transform: "translateY(0px) rotate(0deg)" },
+              "50%": { transform: "translateY(-18px) rotate(1.4deg)" }
+            },
+            shimmer: {
+              "0%": { backgroundPosition: "-220% center" },
+              "100%": { backgroundPosition: "220% center" }
+            },
+            drift: {
+              "0%": { transform: "translate3d(0,0,0) rotate(0deg)" },
+              "50%": { transform: "translate3d(18px,-28px,0) rotate(8deg)" },
+              "100%": { transform: "translate3d(0,0,0) rotate(0deg)" }
+            },
+            slideUp: {
+              "0%": { opacity: 0, transform: "translateY(18px)" },
+              "100%": { opacity: 1, transform: "translateY(0)" }
+            }
+          },
+          animation: {
+            floaty: "floaty 7s ease-in-out infinite",
+            shimmer: "shimmer 4s linear infinite",
+            drift: "drift 10s ease-in-out infinite",
+            slideUp: "slideUp .7s ease both"
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="bg-[#040406] text-white antialiased">
+  <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_18%_4%,rgba(255,125,82,.26),transparent_32%),radial-gradient(circle_at_88%_8%,rgba(143,92,255,.19),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(255,154,34,.18),transparent_40%),linear-gradient(180deg,#08080d_0%,#040406_58%,#110807_100%)]"></div>
+    <div class="noise"></div>
+    <div class="orb left-[6%] top-[18%] bg-orange-400/30"></div>
+    <div class="orb right-[7%] top-[32%] bg-violet-500/20 [animation-delay:2s]"></div>
+    <div class="orb bottom-[8%] left-[42%] bg-rose-400/14 [animation-delay:4s]"></div>
+  </div>
+
+  <div id="toast" class="fixed left-1/2 top-4 z-[120] hidden -translate-x-1/2 rounded-full border border-white/15 bg-black/85 px-5 py-3 text-sm font-bold shadow-2xl backdrop-blur-xl"></div>
+
+  <div class="top-strip">
+    <div class="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-2 text-center text-[11px] font-black uppercase tracking-[.20em] text-black">
+      <span class="rounded-full bg-black px-2 py-1 text-white">Launch Drop</span>
+      <span>Singles $3 • Six-packs $17 • Cases $32 • Free delivery at $48</span>
+    </div>
+  </div>
+
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-black/48 backdrop-blur-2xl">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+      <a href="#top" class="flex items-center gap-3">
+        <span class="logo-mark">B</span>
+        <span>
+          <span class="block text-sm font-black uppercase tracking-[.25em]">Bold Drop</span>
+          <span class="block text-[11px] text-white/55">Independent reseller</span>
+        </span>
+      </a>
+
+      <nav class="hidden items-center gap-7 text-sm font-bold text-white/62 md:flex">
+        <a href="#flavors" class="hover:text-white">Flavors</a>
+        <a href="#bundles" class="hover:text-white">Bundles</a>
+        <a href="#drop" class="hover:text-white">Drop details</a>
+        <a href="#faq" class="hover:text-white">FAQ</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <a href="#order" class="hidden rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-extrabold text-white backdrop-blur-xl transition hover:bg-white/15 sm:inline-flex">Order</a>
+        <button onclick="openCart()" class="group relative rounded-full bg-white px-4 py-2 text-sm font-extrabold text-black transition hover:scale-105">
+          Cart <span id="cartCount" class="ml-1 rounded-full bg-black px-2 py-0.5 text-xs text-white">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="relative overflow-hidden px-4 pb-16 pt-10 sm:px-6 lg:pb-24">
+      <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_.98fr]">
+        <div class="relative z-10 animate-slideUp">
+          <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black uppercase tracking-[.18em] text-white/80 backdrop-blur-xl">
+            <span class="h-2 w-2 rounded-full bg-orange-300 shadow-[0_0_20px_rgba(255,191,120,1)]"></span>
+            Fast local reserve • limited weekly stock
+          </div>
+
+          <h1 class="max-w-5xl text-5xl font-black leading-[.86] tracking-[-.075em] sm:text-7xl lg:text-8xl xl:text-9xl">
+            Energy cans with a
+            <span class="text-gradient">holy glow.</span>
+          </h1>
+
+          <p class="mt-6 max-w-2xl text-lg leading-8 text-white/66 sm:text-xl">
+            Pick your flavor, build a bundle, and reserve Agape Energy through a local independent reseller. Clean checkout, quick drop, zero DM confusion.
+          </p>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#bundles" class="cta-main magnetic">Build a bundle</a>
+            <a href="#flavors" class="cta-secondary">Explore flavors</a>
+          </div>
+
+          <div class="mt-8 grid max-w-2xl grid-cols-3 gap-3">
+            <div class="stat-card"><strong>$3</strong><span>single cans</span></div>
+            <div class="stat-card"><strong>3</strong><span>flavors live</span></div>
+            <div class="stat-card"><strong>48+</strong><span>free delivery</span></div>
+          </div>
+
+          <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+            <div class="social-pill">
+              <span class="avatar bg-orange-300"></span>
+              <span class="avatar -ml-2 bg-amber-300"></span>
+              <span class="avatar -ml-2 bg-violet-400"></span>
+              <span class="ml-2 text-sm text-white/62">Built for fast school/local orders</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative min-h-[580px] lg:min-h-[720px]">
+          <div class="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-orange-400/30 via-rose-400/12 to-violet-500/24 blur-3xl"></div>
+
+          <div class="phone-shell">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-sky-400 via-pink-300 to-orange-500">
+                <img id="heroImage" src="/img/preachin-peach-front-back.jpg" alt="Agape Energy can" class="aspect-[.86/1] w-full object-cover transition duration-500" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10"></div>
+                <div class="absolute left-5 right-5 top-5 flex justify-between">
+                  <span class="rounded-full bg-white/90 px-3 py-1 text-xs font-black text-black">Reserve</span>
+                  <span id="heroVerse" class="rounded-full bg-black/45 px-3 py-1 text-xs font-black text-white backdrop-blur-xl">Romans 10:14</span>
+                </div>
+                <div class="absolute inset-x-0 bottom-0 p-6">
+                  <p class="text-xs font-black uppercase tracking-[.22em] text-white/70">Featured flavor</p>
+                  <h2 id="heroName" class="mt-1 text-4xl font-black tracking-[-.05em]">Preachin' Peach</h2>
+                  <p id="heroTaste" class="mt-2 text-sm text-white/70">Sweet peach · soft citrus · smooth finish</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-chip left-0 top-16 hidden sm:block">
+            <p class="text-xs uppercase tracking-[.2em] text-white/45">Drop timer</p>
+            <div id="countdown" class="mt-1 text-2xl font-black">36:00:00</div>
+          </div>
+
+          <div class="hero-chip bottom-20 right-0 hidden max-w-[250px] sm:block">
+            <p class="text-xs uppercase tracking-[.2em] text-white/45">Best first order</p>
+            <div class="mt-1 text-2xl font-black">6-pack sampler</div>
+            <p class="mt-2 text-sm text-white/58">Easy to share, easier to reorder.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-y border-white/10 bg-white/[.04] py-4">
+      <div class="marquee text-sm font-black uppercase tracking-[.25em] text-white/50">
+        <span>Preachin' Peach • Mighty Mango • Blessed Berry • Local pickup • Case deals • Energy with purpose • </span>
+        <span>Preachin' Peach • Mighty Mango • Blessed Berry • Local pickup • Case deals • Energy with purpose • </span>
+      </div>
+    </section>
+
+    <section id="flavors" class="px-4 py-20 sm:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p class="eyebrow">Flavor lineup</p>
+            <h2 class="section-title">The product wall should feel expensive.</h2>
+          </div>
+          <p class="max-w-md text-white/58">Big visuals, simple picks, obvious prices, and no clutter. It feels closer to a premium drink drop than a random order form.</p>
+        </div>
+
+        <div id="productGrid" class="grid gap-6 md:grid-cols-3"></div>
+      </div>
+    </section>
+
+    <section id="bundles" class="px-4 py-20 sm:px-6">
+      <div class="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[.95fr_1.05fr]">
+        <div class="sticky top-24 self-start rounded-[2.5rem] border border-white/10 bg-white/[.07] p-6 shadow-glass backdrop-blur-xl">
+          <p class="eyebrow">Bundle builder</p>
+          <h2 class="mt-3 text-4xl font-black tracking-[-.055em] sm:text-6xl">Make buying feel easy.</h2>
+          <p class="mt-5 leading-7 text-white/60">Most people do not want to think. Give them three obvious options: try one, share a six-pack, or stock up with a case.</p>
+          <div class="mt-6 rounded-[1.8rem] bg-black/35 p-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+              <span class="text-white/55">Best impulse buy</span>
+              <strong>$3 single</strong>
+            </div>
+            <div class="flex items-center justify-between border-b border-white/10 py-3">
+              <span class="text-white/55">Best for friends</span>
+              <strong>$17 six-pack</strong>
+            </div>
+            <div class="flex items-center justify-between pt-3">
+              <span class="text-white/55">Best reorder</span>
+              <strong>$32 case</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-4">
+          <button class="bundle-card" onclick="quickBundle('sampler')">
+            <div>
+              <p class="text-xs font-black uppercase tracking-[.2em] text-orange-200/70">Starter</p>
+              <h3>3-can flavor flight</h3>
+              <p>One of each flavor. Perfect for trying the whole lineup.</p>
+            </div>
+            <strong>$9</strong>
+          </button>
+          <button class="bundle-card" onclick="quickBundle('share')">
+            <div>
+              <p class="text-xs font-black uppercase tracking-[.2em] text-orange-200/70">Popular</p>
+              <h3>6-pack share drop</h3>
+              <p>Six cans split across the strongest flavors.</p>
+            </div>
+            <strong>$17</strong>
+          </button>
+          <button class="bundle-card" onclick="quickBundle('case')">
+            <div>
+              <p class="text-xs font-black uppercase tracking-[.2em] text-orange-200/70">Stock up</p>
+              <h3>12-pack case</h3>
+              <p>Best if they already know their flavor and want the cleanest value.</p>
+            </div>
+            <strong>$32</strong>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="drop" class="px-4 py-20 sm:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="drop-panel">
+          <div>
+            <p class="eyebrow">Drop details</p>
+            <h2 class="mt-3 text-4xl font-black tracking-[-.055em] sm:text-6xl">The page now sells the experience, not just the can.</h2>
+            <p class="mt-5 max-w-2xl leading-7 text-white/60">People buy faster when they can immediately understand the price, delivery, and what happens after they order.</p>
+          </div>
+
+          <div class="mt-10 grid gap-4 md:grid-cols-3">
+            <div class="step-card"><span>1</span><h3>Pick flavor</h3><p>Choose peach, mango, berry, or a bundle.</p></div>
+            <div class="step-card"><span>2</span><h3>Reserve</h3><p>Submit order with pickup, delivery, or shipping request.</p></div>
+            <div class="step-card"><span>3</span><h3>Confirm</h3><p>You confirm payment/drop details from the admin page.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 py-20 sm:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="grid gap-4 md:grid-cols-3">
+          <div class="review-card">
+            <p>“The peach one looks crazy in person. The site makes it feel like a real drop.”</p>
+            <span>Early buyer</span>
+          </div>
+          <div class="review-card">
+            <p>“$3 is easy. I don’t have to think about shipping or ordering online.”</p>
+            <span>Local customer</span>
+          </div>
+          <div class="review-card">
+            <p>“The bundle options make it way easier to ask friends what they want.”</p>
+            <span>Repeat order</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="order" class="px-4 py-20 sm:px-6">
+      <div class="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_.8fr]">
+        <div>
+          <p class="eyebrow">Checkout</p>
+          <h2 class="section-title">Reserve your drop.</h2>
+          <p class="mt-5 max-w-2xl leading-7 text-white/60">Add flavors above, then submit your info here. Cash App, Venmo, cash, and card-link placeholders are ready.</p>
+
+          <div class="mt-8 rounded-[2rem] border border-white/10 bg-white/[.07] p-5 shadow-glass backdrop-blur-xl">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-black">Your cart</h3>
+              <button onclick="openCart()" class="rounded-full border border-white/10 px-3 py-1 text-sm text-white/60 hover:text-white">Edit</button>
+            </div>
+            <div id="checkoutCart" class="mt-4 space-y-3"></div>
+            <div class="mt-5 border-t border-white/10 pt-5">
+              <div class="flex justify-between text-white/60"><span>Subtotal</span><span id="checkoutSubtotal">$0.00</span></div>
+              <div class="mt-2 flex justify-between text-white/60"><span>Delivery</span><span id="checkoutDelivery">$0.00</span></div>
+              <div class="mt-3 flex justify-between text-2xl font-black"><span>Total</span><span id="checkoutTotal">$0.00</span></div>
+              <p id="freeDeliveryHint" class="mt-3 text-sm text-orange-100/70"></p>
+            </div>
+          </div>
+        </div>
+
+        <form id="orderForm" class="rounded-[2rem] border border-white/10 bg-white/[.07] p-5 shadow-glass backdrop-blur-xl sm:p-7">
+          <div class="grid gap-4">
+            <label class="field"><span>Name</span><input name="name" autocomplete="name" required placeholder="Your name" /></label>
+            <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" required placeholder="you@email.com" /></label>
+            <label class="field"><span>Phone</span><input name="phone" autocomplete="tel" required placeholder="Text number" /></label>
+
+            <label class="field">
+              <span>Delivery method</span>
+              <select name="deliveryMethod" id="deliveryMethod">
+                <option value="pickup">Pickup</option>
+                <option value="local-delivery">Local delivery</option>
+                <option value="shipping">Shipping request</option>
+              </select>
+            </label>
+
+            <div id="addressFields" class="grid hidden gap-4">
+              <label class="field"><span>Address</span><input name="address" autocomplete="street-address" placeholder="Street address" /></label>
+              <div class="grid gap-4 sm:grid-cols-3">
+                <label class="field sm:col-span-1"><span>City</span><input name="city" autocomplete="address-level2" placeholder="City" /></label>
+                <label class="field"><span>State</span><input name="state" autocomplete="address-level1" placeholder="FL" /></label>
+                <label class="field"><span>Zip</span><input name="zip" autocomplete="postal-code" placeholder="34453" /></label>
+              </div>
+            </div>
+
+            <label class="field">
+              <span>Payment</span>
+              <select name="paymentMethod">
+                <option value="cashapp">Cash App</option>
+                <option value="venmo">Venmo</option>
+                <option value="cash">Cash at pickup/drop</option>
+                <option value="card-later">Card link after confirmation</option>
+              </select>
+            </label>
+
+            <label class="field"><span>Notes</span><textarea name="notes" rows="4" placeholder="Flavor swaps, pickup time, delivery details..."></textarea></label>
+
+            <button class="rounded-2xl bg-white px-6 py-4 text-sm font-black uppercase tracking-[.18em] text-black transition hover:scale-[1.01]" type="submit">
+              Submit order
+            </button>
+            <p class="text-xs leading-5 text-white/38">Energy drinks may contain caffeine. Check the label before drinking. Not recommended for kids, pregnancy, or caffeine-sensitive people.</p>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="faq" class="px-4 pb-28 pt-12 sm:px-6">
+      <div class="mx-auto max-w-4xl">
+        <p class="eyebrow text-center">FAQ</p>
+        <h2 class="mt-3 text-center text-4xl font-black tracking-[-.055em] sm:text-6xl">Quick answers = fewer DMs.</h2>
+        <div class="mt-10 space-y-3">
+          <details class="faq"><summary>Is this the official Agape Energy site?</summary><p>No. This is an independent reseller order page.</p></details>
+          <details class="faq"><summary>How do I pay?</summary><p>Choose Cash App, Venmo, cash, or card-link after confirmation.</p></details>
+          <details class="faq"><summary>Can I order a case?</summary><p>Yes. Pick the 12-pack case option under any flavor.</p></details>
+          <details class="faq"><summary>Do you deliver?</summary><p>Pickup is default. Local delivery and shipping requests can be selected during checkout.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="mobile-bar">
+    <div>
+      <div class="text-xs text-white/45">Ready?</div>
+      <div class="font-black">Reserve your drop</div>
+    </div>
+    <a href="#order">Order now</a>
+  </div>
+
+  <footer class="border-t border-white/10 px-4 py-10 sm:px-6">
+    <div class="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-white/45 md:flex-row">
+      <p>© <span id="year"></span> Bold Drop. Independent reseller storefront.</p>
+      <p>Not the official Agape Energy website. Follow brand rules, product label warnings, and local rules.</p>
+    </div>
+  </footer>
+
+  <aside id="cartDrawer" class="fixed inset-y-0 right-0 z-[100] w-full max-w-md translate-x-full border-l border-white/10 bg-[#08080d]/95 p-5 shadow-2xl backdrop-blur-2xl transition duration-300">
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-black">Your cart</h2>
+      <button onclick="closeCart()" class="rounded-full border border-white/10 px-3 py-1 text-white/60 hover:text-white">Close</button>
+    </div>
+    <div id="drawerItems" class="mt-6 space-y-3"></div>
+    <div class="mt-6 border-t border-white/10 pt-5">
+      <div class="flex justify-between text-white/60"><span>Subtotal</span><span id="drawerSubtotal">$0.00</span></div>
+      <div class="mt-3 flex justify-between text-2xl font-black"><span>Total now</span><span id="drawerTotal">$0.00</span></div>
+      <a onclick="closeCart()" href="#order" class="mt-5 block rounded-2xl bg-white px-5 py-4 text-center text-sm font-black uppercase tracking-[.18em] text-black">Checkout</a>
+    </div>
+  </aside>
+
+  <script src="/app.js"></script>
+</body>
+</html>
