@@ -328,12 +328,14 @@ function showOrderTicket(data) {
 async function submitOrder(event) {
   event.preventDefault();
 
+  const formEl = event.currentTarget;
+
   if (!state.cart.length) {
     toast("Add at least one item first.");
     return;
   }
 
-  const form = new FormData(event.currentTarget);
+  const form = new FormData(formEl);
   const payload = {
     customer: {
       name: form.get("name"),
@@ -350,7 +352,7 @@ async function submitOrder(event) {
     items: state.cart
   };
 
-  const button = event.currentTarget.querySelector("button[type='submit']");
+  const button = formEl.querySelector("button[type='submit']");
   button.disabled = true;
   button.textContent = "Submitting...";
 
@@ -367,7 +369,7 @@ async function submitOrder(event) {
     state.cart = [];
     saveCart();
     renderCart();
-    event.currentTarget.reset();
+    formEl.reset();
 
     showOrderTicket(data);
     toast(`Order ${data.orderId} saved.`);
