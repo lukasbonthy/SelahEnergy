@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -13,7 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PIN = process.env.ADMIN_PIN || "1234";
 
-const db = new Database(path.join(__dirname, "data", "orders.db"));
+const dataDir = path.join(__dirname, "data");
+fs.mkdirSync(dataDir, { recursive: true });
+
+const db = new Database(path.join(dataDir, "orders.db"));
 db.pragma("journal_mode = WAL");
 
 db.exec(`
@@ -99,7 +103,7 @@ const products = [
 ];
 
 const config = {
-  storeName: "Bold Drop",
+  storeName: "Selah Energy",
   officialDisclaimer: "Independent reseller. Not the official Agape Energy website.",
   pickupText: "Local pickup + delivery available. Shipping available after confirmation.",
   cashapp: process.env.CASHAPP_LINK || "",
@@ -285,5 +289,5 @@ app.get("*", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Bold Drop running on http://localhost:${PORT}`);
+  console.log(`Selah Energy running on http://localhost:${PORT}`);
 });
