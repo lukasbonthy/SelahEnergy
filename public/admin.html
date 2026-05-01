@@ -52,9 +52,16 @@
             </div>
             <div class="text-left md:text-right">
               <div class="text-3xl font-black">${order.displayTotal}</div>
-              <select data-id="${order.id}" class="mt-3 rounded-xl bg-black p-3 text-white">
-                ${["new","confirmed","packed","delivered","cancelled"].map(s => `<option ${order.status === s ? "selected" : ""}>${s}</option>`).join("")}
-              </select>
+              <div class="mt-3 grid gap-2">
+                <label class="text-xs text-white/40">Order status</label>
+                <select data-id="${order.id}" data-kind="status" class="rounded-xl bg-black p-3 text-white">
+                  ${["new","confirmed","packed","delivered","cancelled"].map(s => `<option ${order.status === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+                <label class="text-xs text-white/40">Cash App payment</label>
+                <select data-id="${order.id}" data-kind="payment" class="rounded-xl bg-black p-3 text-white">
+                  ${["pending","paid","refunded"].map(s => `<option ${order.payment_status === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -72,11 +79,19 @@
 
       document.querySelectorAll("select[data-id]").forEach(select => {
         select.addEventListener("change", async () => {
-          await fetch(`/api/admin/orders/${select.dataset.id}?pin=${encodeURIComponent(pin)}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: select.value })
-          });
+          if (select.dataset.kind === "payment") {
+            await fetch(`/api/admin/orders/${select.dataset.id}/payment?pin=${encodeURIComponent(pin)}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentStatus: select.value })
+            });
+          } else {
+            await fetch(`/api/admin/orders/${select.dataset.id}?pin=${encodeURIComponent(pin)}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: select.value })
+            });
+          }
         });
       });
     }
